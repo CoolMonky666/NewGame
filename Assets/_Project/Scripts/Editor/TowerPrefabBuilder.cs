@@ -7,53 +7,72 @@ namespace MergeDefense.EditorTools
     [InitializeOnLoad]
     public static class TowerPrefabBuilder
     {
-        private const string ModelPath = "Assets/_Project/Art/Models/Towers/base_tower_4.fbx";
-        private const string BaseTexturePath = "Assets/_Project/Art/Models/Towers/base_tower_4_texture.png";
-        private const string NormalTexturePath = "Assets/_Project/Art/Models/Towers/base_tower_4_texture_normal.png";
-        private const string MetallicTexturePath = "Assets/_Project/Art/Models/Towers/base_tower_4_texture_metallic.png";
-        private const string RoughnessTexturePath = "Assets/_Project/Art/Models/Towers/base_tower_4_texture_roughness.png";
         private const string MaterialFolder = "Assets/_Project/Art/Materials/Towers";
-        private const string MaterialPath = MaterialFolder + "/base_tower_4.mat";
-        private const string PrefabPath = "Assets/_Project/Prefabs/Towers/base_tower_4.prefab";
+        private const string PrefabFolder = "Assets/_Project/Prefabs/Towers";
+
+        private static readonly TowerAssetDefinition[] Towers =
+        {
+            new("base_tower_1", "Assets/_Project/Art/Models/Towers/base_tower_1", 1.4f, 1.8f),
+            new("base_tower_4", "Assets/_Project/Art/Models/Towers/base_tower_4", 1.4f, 1.8f),
+        };
 
         static TowerPrefabBuilder()
         {
             EditorApplication.delayCall += BuildIfNeeded;
         }
 
+        [MenuItem("Tools/Merge Defense/Rebuild All Tower Prefabs")]
+        public static void RebuildAllTowerPrefabs()
+        {
+            foreach (var tower in Towers)
+            {
+                BuildTowerPrefab(tower, force: true);
+            }
+        }
+
+        [MenuItem("Tools/Merge Defense/Rebuild Base Tower 1 Prefab")]
+        public static void RebuildBaseTower1Prefab()
+        {
+            BuildTowerPrefab(Towers[0], force: true);
+        }
+
         [MenuItem("Tools/Merge Defense/Rebuild Base Tower 4 Prefab")]
         public static void RebuildBaseTower4Prefab()
         {
-            BuildBaseTower4Prefab(force: true);
+            BuildTowerPrefab(Towers[1], force: true);
         }
 
         private static void BuildIfNeeded()
         {
-            BuildBaseTower4Prefab(force: false);
+            foreach (var tower in Towers)
+            {
+                BuildTowerPrefab(tower, force: false);
+            }
         }
 
-        private static void BuildBaseTower4Prefab(bool force)
+        private static void BuildTowerPrefab(TowerAssetDefinition tower, bool force)
         {
-            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
+            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(tower.PrefabPath) != null)
             {
                 return;
             }
 
-            var model = AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath);
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(tower.ModelPath);
             if (model == null)
             {
-                Debug.LogWarning($"Tower prefab build skipped: model not found at {ModelPath}.");
+                Debug.LogWarning($"Tower prefab build skipped: model not found at {tower.ModelPath}.");
                 return;
             }
 
             Directory.CreateDirectory(MaterialFolder);
-            ConfigureTextureImport(BaseTexturePath, TextureImporterType.Default, true);
-            ConfigureTextureImport(NormalTexturePath, TextureImporterType.NormalMap, false);
-            ConfigureTextureImport(MetallicTexturePath, TextureImporterType.Default, false);
-            ConfigureTextureImport(RoughnessTexturePath, TextureImporterType.Default, false);
+            Directory.CreateDirectory(PrefabFolder);
+            ConfigureTextureImport(tower.BaseTexturePath, TextureImporterType.Default, true);
+            ConfigureTextureImport(tower.NormalTexturePath, TextureImporterType.NormalMap, false);
+            ConfigureTextureImport(tower.MetallicTexturePath, TextureImporterType.Default, false);
+            ConfigureTextureImport(tower.RoughnessTexturePath, TextureImporterType.Default, false);
 
-            var material = CreateOrUpdateMaterial();
-            var root = new GameObject("base_tower_4");
+            var material = CreateOrUpdateMaterial(tower);
+            var root = new GameObject(tower.AssetName);
             var modelInstance = (GameObject)PrefabUtility.InstantiatePrefab(model);
             modelInstance.name = "Model";
             modelInstance.transform.SetParent(root.transform, false);
@@ -62,34 +81,33 @@ namespace MergeDefense.EditorTools
             modelInstance.transform.localScale = Vector3.one;
 
             AssignMaterial(modelInstance, material);
-            NormalizeModel(modelInstance, 1.4f, 1.8f);
+            NormalizeModel(modelInstance, tower.TargetFootprint, tower.TargetHeight);
             AddFirePoint(root.transform, modelInstance);
             AddBoundsCollider(root, modelInstance);
 
-            Directory.CreateDirectory(Path.GetDirectoryName(PrefabPath));
-            PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+            PrefabUtility.SaveAsPrefabAsset(root, tower.PrefabPath);
             Object.DestroyImmediate(root);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"base_tower_4 prefab built at {PrefabPath}.");
+            Debug.Log($"{tower.AssetName} prefab built at {tower.PrefabPath}.");
         }
 
-        private static Material CreateOrUpdateMaterial()
+        private static Material CreateOrUpdateMaterial(TowerAssetDefinition tower)
         {
-            var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
+            var material = AssetDatabase.LoadAssetAtPath<Material>(tower.MaterialPath);
             if (material == null)
             {
                 var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
                 material = new Material(shader)
                 {
-                    name = "base_tower_4"
+                    name = tower.AssetName
                 };
-                AssetDatabase.CreateAsset(material, MaterialPath);
+                AssetDatabase.CreateAsset(material, tower.MaterialPath);
             }
 
-            SetTexture(material, "_BaseMap", BaseTexturePath);
-            SetTexture(material, "_BumpMap", NormalTexturePath);
-            SetTexture(material, "_MetallicGlossMap", MetallicTexturePath);
+            SetTexture(material, "_BaseMap", tower.BaseTexturePath);
+            SetTexture(material, "_BumpMap", tower.NormalTexturePath);
+            SetTexture(material, "_MetallicGlossMap", tower.MetallicTexturePath);
             SetFloat(material, "_Metallic", 0.2f);
             SetFloat(material, "_Smoothness", 0.42f);
             if (material.HasProperty("_WorkflowMode"))
@@ -222,6 +240,29 @@ namespace MergeDefense.EditorTools
             }
 
             return bounds;
+        }
+
+        private readonly struct TowerAssetDefinition
+        {
+            public TowerAssetDefinition(string assetName, string sourceFolder, float targetFootprint, float targetHeight)
+            {
+                AssetName = assetName;
+                SourceFolder = sourceFolder;
+                TargetFootprint = targetFootprint;
+                TargetHeight = targetHeight;
+            }
+
+            public string AssetName { get; }
+            public string SourceFolder { get; }
+            public float TargetFootprint { get; }
+            public float TargetHeight { get; }
+            public string ModelPath => $"{SourceFolder}/{AssetName}.fbx";
+            public string BaseTexturePath => $"{SourceFolder}/{AssetName}_texture.png";
+            public string NormalTexturePath => $"{SourceFolder}/{AssetName}_texture_normal.png";
+            public string MetallicTexturePath => $"{SourceFolder}/{AssetName}_texture_metallic.png";
+            public string RoughnessTexturePath => $"{SourceFolder}/{AssetName}_texture_roughness.png";
+            public string MaterialPath => $"{MaterialFolder}/{AssetName}.mat";
+            public string PrefabPath => $"{PrefabFolder}/{AssetName}.prefab";
         }
     }
 }

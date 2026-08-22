@@ -188,6 +188,16 @@ Assets/_Project/Art/Models/Environment/
 Assets/_Project/Art/Models/Projectiles/
 ```
 
+Для башен используем подпапку на каждый ассет, чтобы модель и её исходные текстуры лежали вместе:
+
+```text
+Assets/_Project/Art/Models/Towers/base_tower_1/base_tower_1.fbx
+Assets/_Project/Art/Models/Towers/base_tower_1/base_tower_1_texture.png
+Assets/_Project/Art/Models/Towers/base_tower_1/base_tower_1_texture_normal.png
+Assets/_Project/Art/Models/Towers/base_tower_1/base_tower_1_texture_metallic.png
+Assets/_Project/Art/Models/Towers/base_tower_1/base_tower_1_texture_roughness.png
+```
+
 Текстуры:
 
 ```text
@@ -229,4 +239,3 @@ Assets/_Project/Prefabs/Projectiles/
 - ассет не содержит лишних материалов;
 - для врага есть или запланированы нужные анимации;
 - prefab можно использовать в gameplay без ручной починки каждый раз.
-
