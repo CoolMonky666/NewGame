@@ -3,7 +3,10 @@ using MergeDefense.Prototype;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace MergeDefense.EditorTools
 {
@@ -78,12 +81,9 @@ namespace MergeDefense.EditorTools
             CreateCastle(waypointPositions[^1] + new Vector3(-0.45f, 0.55f, 0.85f), castleMaterial);
 
             var towerRoot = new GameObject("Towers");
-            InstantiateTower(tower1Prefab, towerRoot.transform, board, GridToWorld(1, 1, cellSize), 35f, "base_tower_1_A", projectileMaterial);
-            InstantiateTower(tower1Prefab, towerRoot.transform, board, GridToWorld(3, 2, cellSize), -25f, "base_tower_1_B", projectileMaterial);
-            InstantiateTower(tower4Prefab, towerRoot.transform, board, GridToWorld(2, 3, cellSize), 0f, "base_tower_4_A", projectileMaterial);
 
             var enemyRoot = new GameObject("Enemies");
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < 10; i++)
             {
                 var enemy = (GameObject)PrefabUtility.InstantiatePrefab(enemyPrefab, scene);
                 enemy.name = $"base_enemy_1_{i + 1:00}";
@@ -93,11 +93,12 @@ namespace MergeDefense.EditorTools
                 health.Configure(3, FindChild(enemy.transform, "HitPoint"));
 
                 var follower = enemy.AddComponent<PrototypePathFollower>();
-                follower.Configure(waypoints, 0.85f, i * 2.1f, true);
+                follower.Configure(waypoints, 0.85f, i * 1.35f, true);
             }
 
             CreateLighting();
             CreateCamera();
+            CreateBattleUi(board, towerRoot.transform, new[] { tower1Prefab, tower4Prefab }, projectileMaterial);
 
             Directory.CreateDirectory(Path.GetDirectoryName(ScenePath));
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -187,21 +188,6 @@ namespace MergeDefense.EditorTools
             castle.GetComponent<Renderer>().sharedMaterial = material;
         }
 
-        private static void InstantiateTower(GameObject prefab, Transform parent, PrototypeBattleBoard board, Vector3 position, float yRotation, string name, Material projectileMaterial)
-        {
-            var tower = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            tower.name = name;
-            tower.transform.SetParent(parent);
-            tower.transform.position = position + Vector3.up * board.TowerHeightOffset;
-            tower.transform.rotation = Quaternion.Euler(0f, yRotation, 0f);
-
-            var attack = tower.AddComponent<PrototypeTowerAttack>();
-            attack.Configure(FindChild(tower.transform, "FirePoint"), 6f, 1f, 1, 7f, projectileMaterial);
-
-            var draggable = tower.AddComponent<PrototypeTowerDraggable>();
-            draggable.Configure(board);
-        }
-
         private static void CreateLighting()
         {
             RenderSettings.ambientLight = new Color(0.55f, 0.58f, 0.62f, 1f);
@@ -213,7 +199,7 @@ namespace MergeDefense.EditorTools
             lightObject.transform.rotation = Quaternion.Euler(45f, -35f, 0f);
         }
 
-        private static void CreateCamera()
+        private static Camera CreateCamera()
         {
             var cameraObject = new GameObject("Battle Camera");
             var camera = cameraObject.AddComponent<Camera>();
@@ -230,6 +216,83 @@ namespace MergeDefense.EditorTools
 
             var dragController = new GameObject("Tower Drag Controller").AddComponent<PrototypeTowerDragController>();
             dragController.Configure(camera);
+            return camera;
+        }
+
+        private static void CreateBattleUi(PrototypeBattleBoard board, Transform towerRoot, GameObject[] towerPrefabs, Material projectileMaterial)
+        {
+            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+            var canvasObject = new GameObject("Battle UI");
+            var canvas = canvasObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasObject.AddComponent<GraphicRaycaster>();
+
+            var scaler = canvasObject.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1080f, 1920f);
+            scaler.matchWidthOrHeight = 1f;
+
+            var panel = new GameObject("Top Resource Panel");
+            panel.transform.SetParent(canvasObject.transform, false);
+            var panelRect = panel.AddComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(0.5f, 1f);
+            panelRect.anchorMax = new Vector2(0.5f, 1f);
+            panelRect.pivot = new Vector2(0.5f, 1f);
+            panelRect.anchoredPosition = new Vector2(0f, -56f);
+            panelRect.sizeDelta = new Vector2(880f, 172f);
+            var panelImage = panel.AddComponent<Image>();
+            panelImage.color = new Color(0.08f, 0.10f, 0.12f, 0.82f);
+
+            var coinText = CreateText("Coin Counter", panel.transform, font, "Coins: 0", 44, TextAnchor.MiddleLeft, new Color(1f, 0.86f, 0.32f, 1f));
+            var coinRect = coinText.GetComponent<RectTransform>();
+            coinRect.anchorMin = new Vector2(0f, 0.5f);
+            coinRect.anchorMax = new Vector2(0f, 0.5f);
+            coinRect.pivot = new Vector2(0f, 0.5f);
+            coinRect.anchoredPosition = new Vector2(38f, 0f);
+            coinRect.sizeDelta = new Vector2(330f, 92f);
+
+            var buttonObject = new GameObject("Summon Tower Button");
+            buttonObject.transform.SetParent(panel.transform, false);
+            var buttonRect = buttonObject.AddComponent<RectTransform>();
+            buttonRect.anchorMin = new Vector2(1f, 0.5f);
+            buttonRect.anchorMax = new Vector2(1f, 0.5f);
+            buttonRect.pivot = new Vector2(1f, 0.5f);
+            buttonRect.anchoredPosition = new Vector2(-34f, 0f);
+            buttonRect.sizeDelta = new Vector2(420f, 108f);
+            var buttonImage = buttonObject.AddComponent<Image>();
+            buttonImage.color = new Color(0.24f, 0.48f, 0.78f, 1f);
+            var button = buttonObject.AddComponent<Button>();
+            button.targetGraphic = buttonImage;
+
+            var buttonText = CreateText("Button Label", buttonObject.transform, font, "Summon - 2", 38, TextAnchor.MiddleCenter, Color.white);
+            var buttonTextRect = buttonText.GetComponent<RectTransform>();
+            buttonTextRect.anchorMin = Vector2.zero;
+            buttonTextRect.anchorMax = Vector2.one;
+            buttonTextRect.offsetMin = Vector2.zero;
+            buttonTextRect.offsetMax = Vector2.zero;
+
+            var eventSystem = new GameObject("EventSystem");
+            eventSystem.AddComponent<EventSystem>();
+            var uiInputModule = eventSystem.AddComponent<InputSystemUIInputModule>();
+            uiInputModule.AssignDefaultActions();
+
+            var summonController = new GameObject("Tower Summon Controller").AddComponent<PrototypeTowerSummonController>();
+            summonController.Configure(board, towerRoot, towerPrefabs, projectileMaterial, coinText, button);
+        }
+
+        private static Text CreateText(string name, Transform parent, Font font, string text, int fontSize, TextAnchor alignment, Color color)
+        {
+            var textObject = new GameObject(name);
+            textObject.transform.SetParent(parent, false);
+            var textComponent = textObject.AddComponent<Text>();
+            textComponent.font = font;
+            textComponent.text = text;
+            textComponent.fontSize = fontSize;
+            textComponent.alignment = alignment;
+            textComponent.color = color;
+            textComponent.raycastTarget = false;
+            return textComponent;
         }
 
         private static Transform FindChild(Transform root, string childName)
@@ -246,5 +309,4 @@ namespace MergeDefense.EditorTools
         }
     }
 }
-
 
