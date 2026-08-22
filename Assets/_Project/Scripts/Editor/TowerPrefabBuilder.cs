@@ -7,32 +7,32 @@ namespace MergeDefense.EditorTools
     [InitializeOnLoad]
     public static class TowerPrefabBuilder
     {
-        private const string ModelPath = "Assets/_Project/Art/Models/Towers/Base_tower.fbx";
-        private const string BaseTexturePath = "Assets/_Project/Art/Models/Towers/Base_tower_texture.png";
-        private const string NormalTexturePath = "Assets/_Project/Art/Models/Towers/Base_tower_texture_normal.png";
-        private const string MetallicTexturePath = "Assets/_Project/Art/Models/Towers/Base_tower_texture_metallic.png";
-        private const string RoughnessTexturePath = "Assets/_Project/Art/Models/Towers/Base_tower_texture_roughness.png";
+        private const string ModelPath = "Assets/_Project/Art/Models/Towers/base_tower_4.fbx";
+        private const string BaseTexturePath = "Assets/_Project/Art/Models/Towers/base_tower_4_texture.png";
+        private const string NormalTexturePath = "Assets/_Project/Art/Models/Towers/base_tower_4_texture_normal.png";
+        private const string MetallicTexturePath = "Assets/_Project/Art/Models/Towers/base_tower_4_texture_metallic.png";
+        private const string RoughnessTexturePath = "Assets/_Project/Art/Models/Towers/base_tower_4_texture_roughness.png";
         private const string MaterialFolder = "Assets/_Project/Art/Materials/Towers";
-        private const string MaterialPath = MaterialFolder + "/BaseTower.mat";
-        private const string PrefabPath = "Assets/_Project/Prefabs/Towers/BaseTower.prefab";
+        private const string MaterialPath = MaterialFolder + "/base_tower_4.mat";
+        private const string PrefabPath = "Assets/_Project/Prefabs/Towers/base_tower_4.prefab";
 
         static TowerPrefabBuilder()
         {
             EditorApplication.delayCall += BuildIfNeeded;
         }
 
-        [MenuItem("Tools/Merge Defense/Rebuild Base Tower Prefab")]
-        public static void RebuildBaseTowerPrefab()
+        [MenuItem("Tools/Merge Defense/Rebuild Base Tower 4 Prefab")]
+        public static void RebuildBaseTower4Prefab()
         {
-            BuildBaseTowerPrefab(force: true);
+            BuildBaseTower4Prefab(force: true);
         }
 
         private static void BuildIfNeeded()
         {
-            BuildBaseTowerPrefab(force: false);
+            BuildBaseTower4Prefab(force: false);
         }
 
-        private static void BuildBaseTowerPrefab(bool force)
+        private static void BuildBaseTower4Prefab(bool force)
         {
             if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
             {
@@ -53,7 +53,7 @@ namespace MergeDefense.EditorTools
             ConfigureTextureImport(RoughnessTexturePath, TextureImporterType.Default, false);
 
             var material = CreateOrUpdateMaterial();
-            var root = new GameObject("BaseTower");
+            var root = new GameObject("base_tower_4");
             var modelInstance = (GameObject)PrefabUtility.InstantiatePrefab(model);
             modelInstance.name = "Model";
             modelInstance.transform.SetParent(root.transform, false);
@@ -71,7 +71,7 @@ namespace MergeDefense.EditorTools
             Object.DestroyImmediate(root);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"Base tower prefab built at {PrefabPath}.");
+            Debug.Log($"base_tower_4 prefab built at {PrefabPath}.");
         }
 
         private static Material CreateOrUpdateMaterial()
@@ -82,7 +82,7 @@ namespace MergeDefense.EditorTools
                 var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
                 material = new Material(shader)
                 {
-                    name = "BaseTower"
+                    name = "base_tower_4"
                 };
                 AssetDatabase.CreateAsset(material, MaterialPath);
             }
