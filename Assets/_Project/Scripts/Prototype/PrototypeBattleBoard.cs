@@ -5,10 +5,17 @@ namespace MergeDefense.Prototype
     public sealed class PrototypeBattleBoard : MonoBehaviour
     {
         [SerializeField] private int size = 5;
-        [SerializeField] private float cellSize = 1.6f;
+        [SerializeField] private float cellSize = 1.2f;
         [SerializeField] private float towerHeightOffset = 0.08f;
 
         public float TowerHeightOffset => towerHeightOffset;
+
+        public void Configure(int boardSize, float boardCellSize, float heightOffset)
+        {
+            size = Mathf.Max(1, boardSize);
+            cellSize = Mathf.Max(0.1f, boardCellSize);
+            towerHeightOffset = heightOffset;
+        }
 
         public Vector3 SnapToCell(Vector3 worldPosition)
         {

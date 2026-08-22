@@ -38,8 +38,9 @@ namespace MergeDefense.EditorTools
             scene.name = "BattlePrototype";
 
             var boardRoot = new GameObject("Board 5x5");
+            const float cellSize = 1.2f;
             var board = boardRoot.AddComponent<PrototypeBattleBoard>();
-            const float cellSize = 1.6f;
+            board.Configure(5, cellSize, 0.08f);
             for (var x = 0; x < 5; x++)
             {
                 for (var z = 0; z < 5; z++)
@@ -56,11 +57,11 @@ namespace MergeDefense.EditorTools
             var pathRoot = new GameObject("Enemy Path");
             var waypointPositions = new[]
             {
-                new Vector3(-5.6f, 0.05f, 4.8f),
-                new Vector3(-5.6f, 0.05f, -4.8f),
-                new Vector3(0f, 0.05f, -4.8f),
-                new Vector3(5.6f, 0.05f, -4.8f),
-                new Vector3(5.6f, 0.05f, 3.2f),
+                new Vector3(-3.45f, 0.05f, 4.4f),
+                new Vector3(-3.45f, 0.05f, -4.4f),
+                new Vector3(0f, 0.05f, -4.4f),
+                new Vector3(3.45f, 0.05f, -4.4f),
+                new Vector3(3.45f, 0.05f, 4.4f),
             };
 
             var waypoints = new Transform[waypointPositions.Length];
@@ -74,7 +75,7 @@ namespace MergeDefense.EditorTools
 
             CreatePathTiles(pathRoot.transform, waypointPositions, pathMaterial);
             CreatePathMarker("Spawn Marker", waypointPositions[0], markerMaterial);
-            CreateCastle(waypointPositions[^1] + new Vector3(0f, 0.55f, 1.4f), castleMaterial);
+            CreateCastle(waypointPositions[^1] + new Vector3(-0.45f, 0.55f, 0.85f), castleMaterial);
 
             var towerRoot = new GameObject("Towers");
             InstantiateTower(tower1Prefab, towerRoot.transform, board, GridToWorld(1, 1, cellSize), 35f, "base_tower_1_A", projectileMaterial);
@@ -163,7 +164,7 @@ namespace MergeDefense.EditorTools
                 segment.transform.SetParent(root);
                 segment.transform.position = center;
                 segment.transform.rotation = Quaternion.LookRotation(delta.normalized, Vector3.up);
-                segment.transform.localScale = new Vector3(1.05f, 0.06f, delta.magnitude + 1.05f);
+                segment.transform.localScale = new Vector3(0.9f, 0.06f, delta.magnitude + 0.9f);
                 segment.GetComponent<Renderer>().sharedMaterial = material;
             }
         }
@@ -182,7 +183,7 @@ namespace MergeDefense.EditorTools
             var castle = GameObject.CreatePrimitive(PrimitiveType.Cube);
             castle.name = "Castle Placeholder";
             castle.transform.position = position;
-            castle.transform.localScale = new Vector3(1.8f, 1.1f, 1.8f);
+            castle.transform.localScale = new Vector3(1.35f, 1.1f, 1.35f);
             castle.GetComponent<Renderer>().sharedMaterial = material;
         }
 
@@ -218,14 +219,17 @@ namespace MergeDefense.EditorTools
             var camera = cameraObject.AddComponent<Camera>();
             camera.tag = "MainCamera";
             camera.orthographic = true;
-            camera.orthographicSize = 7.2f;
+            camera.orthographicSize = 7.4f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.08f, 0.09f, 0.11f, 1f);
             camera.nearClipPlane = 0.05f;
             camera.farClipPlane = 100f;
-            cameraObject.transform.position = new Vector3(0f, 9f, -8f);
+            cameraObject.transform.position = new Vector3(0f, 9.2f, -5.75f);
             cameraObject.transform.rotation = Quaternion.Euler(58f, 0f, 0f);
             Camera.SetupCurrent(camera);
+
+            var dragController = new GameObject("Tower Drag Controller").AddComponent<PrototypeTowerDragController>();
+            dragController.Configure(camera);
         }
 
         private static Transform FindChild(Transform root, string childName)
@@ -242,4 +246,5 @@ namespace MergeDefense.EditorTools
         }
     }
 }
+
 
