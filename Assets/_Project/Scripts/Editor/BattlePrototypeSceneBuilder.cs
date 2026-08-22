@@ -32,11 +32,13 @@ namespace MergeDefense.EditorTools
             var pathMaterial = GetOrCreateMaterial("prototype_enemy_path", new Color(0.48f, 0.38f, 0.26f, 1f));
             var castleMaterial = GetOrCreateMaterial("prototype_castle", new Color(0.55f, 0.58f, 0.62f, 1f));
             var markerMaterial = GetOrCreateMaterial("prototype_path_marker", new Color(0.70f, 0.24f, 0.20f, 1f));
+            var projectileMaterial = GetOrCreateMaterial("prototype_projectile", new Color(0.95f, 0.84f, 0.28f, 1f));
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             scene.name = "BattlePrototype";
 
             var boardRoot = new GameObject("Board 5x5");
+            var board = boardRoot.AddComponent<PrototypeBattleBoard>();
             const float cellSize = 1.6f;
             for (var x = 0; x < 5; x++)
             {
@@ -75,9 +77,9 @@ namespace MergeDefense.EditorTools
             CreateCastle(waypointPositions[^1] + new Vector3(0f, 0.55f, 1.4f), castleMaterial);
 
             var towerRoot = new GameObject("Towers");
-            InstantiateTower(tower1Prefab, towerRoot.transform, GridToWorld(1, 1, cellSize), 35f, "base_tower_1_A");
-            InstantiateTower(tower1Prefab, towerRoot.transform, GridToWorld(3, 2, cellSize), -25f, "base_tower_1_B");
-            InstantiateTower(tower4Prefab, towerRoot.transform, GridToWorld(2, 3, cellSize), 0f, "base_tower_4_A");
+            InstantiateTower(tower1Prefab, towerRoot.transform, board, GridToWorld(1, 1, cellSize), 35f, "base_tower_1_A", projectileMaterial);
+            InstantiateTower(tower1Prefab, towerRoot.transform, board, GridToWorld(3, 2, cellSize), -25f, "base_tower_1_B", projectileMaterial);
+            InstantiateTower(tower4Prefab, towerRoot.transform, board, GridToWorld(2, 3, cellSize), 0f, "base_tower_4_A", projectileMaterial);
 
             var enemyRoot = new GameObject("Enemies");
             for (var i = 0; i < 4; i++)
@@ -85,6 +87,10 @@ namespace MergeDefense.EditorTools
                 var enemy = (GameObject)PrefabUtility.InstantiatePrefab(enemyPrefab, scene);
                 enemy.name = $"base_enemy_1_{i + 1:00}";
                 enemy.transform.SetParent(enemyRoot.transform);
+
+                var health = enemy.AddComponent<PrototypeEnemyHealth>();
+                health.Configure(3, FindChild(enemy.transform, "HitPoint"));
+
                 var follower = enemy.AddComponent<PrototypePathFollower>();
                 follower.Configure(waypoints, 0.85f, i * 2.1f, true);
             }
@@ -180,13 +186,19 @@ namespace MergeDefense.EditorTools
             castle.GetComponent<Renderer>().sharedMaterial = material;
         }
 
-        private static void InstantiateTower(GameObject prefab, Transform parent, Vector3 position, float yRotation, string name)
+        private static void InstantiateTower(GameObject prefab, Transform parent, PrototypeBattleBoard board, Vector3 position, float yRotation, string name, Material projectileMaterial)
         {
             var tower = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             tower.name = name;
             tower.transform.SetParent(parent);
-            tower.transform.position = position + Vector3.up * 0.08f;
+            tower.transform.position = position + Vector3.up * board.TowerHeightOffset;
             tower.transform.rotation = Quaternion.Euler(0f, yRotation, 0f);
+
+            var attack = tower.AddComponent<PrototypeTowerAttack>();
+            attack.Configure(FindChild(tower.transform, "FirePoint"), 6f, 1f, 1, 7f, projectileMaterial);
+
+            var draggable = tower.AddComponent<PrototypeTowerDraggable>();
+            draggable.Configure(board);
         }
 
         private static void CreateLighting()
@@ -204,6 +216,7 @@ namespace MergeDefense.EditorTools
         {
             var cameraObject = new GameObject("Battle Camera");
             var camera = cameraObject.AddComponent<Camera>();
+            camera.tag = "MainCamera";
             camera.orthographic = true;
             camera.orthographicSize = 7.2f;
             camera.clearFlags = CameraClearFlags.SolidColor;
@@ -214,8 +227,19 @@ namespace MergeDefense.EditorTools
             cameraObject.transform.rotation = Quaternion.Euler(58f, 0f, 0f);
             Camera.SetupCurrent(camera);
         }
+
+        private static Transform FindChild(Transform root, string childName)
+        {
+            foreach (var child in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == childName)
+                {
+                    return child;
+                }
+            }
+
+            return root;
+        }
     }
 }
-
-
 

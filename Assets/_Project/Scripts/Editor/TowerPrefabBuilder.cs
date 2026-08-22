@@ -12,8 +12,8 @@ namespace MergeDefense.EditorTools
 
         private static readonly TowerAssetDefinition[] Towers =
         {
-            new("base_tower_1", "Assets/_Project/Art/Models/Towers/base_tower_1", 1.4f, 1.8f),
-            new("base_tower_4", "Assets/_Project/Art/Models/Towers/base_tower_4", 1.4f, 1.8f),
+            new("base_tower_1", "Assets/_Project/Art/Models/Towers/base_tower_1", 1.4f, 1.8f, new Vector3(-90f, 0f, 0f)),
+            new("base_tower_4", "Assets/_Project/Art/Models/Towers/base_tower_4", 1.4f, 1.8f, new Vector3(-90f, 0f, 0f)),
         };
 
         static TowerPrefabBuilder()
@@ -77,7 +77,7 @@ namespace MergeDefense.EditorTools
             modelInstance.name = "Model";
             modelInstance.transform.SetParent(root.transform, false);
             modelInstance.transform.localPosition = Vector3.zero;
-            modelInstance.transform.localRotation = Quaternion.identity;
+            modelInstance.transform.localRotation = Quaternion.Euler(tower.VisualRotationEuler);
             modelInstance.transform.localScale = Vector3.one;
 
             AssignMaterial(modelInstance, material);
@@ -244,18 +244,20 @@ namespace MergeDefense.EditorTools
 
         private readonly struct TowerAssetDefinition
         {
-            public TowerAssetDefinition(string assetName, string sourceFolder, float targetFootprint, float targetHeight)
+            public TowerAssetDefinition(string assetName, string sourceFolder, float targetFootprint, float targetHeight, Vector3 visualRotationEuler)
             {
                 AssetName = assetName;
                 SourceFolder = sourceFolder;
                 TargetFootprint = targetFootprint;
                 TargetHeight = targetHeight;
+                VisualRotationEuler = visualRotationEuler;
             }
 
             public string AssetName { get; }
             public string SourceFolder { get; }
             public float TargetFootprint { get; }
             public float TargetHeight { get; }
+            public Vector3 VisualRotationEuler { get; }
             public string ModelPath => $"{SourceFolder}/{AssetName}.fbx";
             public string BaseTexturePath => $"{SourceFolder}/{AssetName}_texture.png";
             public string NormalTexturePath => $"{SourceFolder}/{AssetName}_texture_normal.png";
@@ -266,3 +268,4 @@ namespace MergeDefense.EditorTools
         }
     }
 }
+
