@@ -20,26 +20,30 @@ namespace MergeDefense.Prototype
 
         public Vector3 SnapToCell(Vector3 worldPosition)
         {
-            var half = (size - 1) * 0.5f;
-            var x = Mathf.Round(worldPosition.x / cellSize + half);
-            var z = Mathf.Round(worldPosition.z / cellSize + half);
-            x = Mathf.Clamp(x, 0f, size - 1f);
-            z = Mathf.Clamp(z, 0f, size - 1f);
-            return CellToWorld((int)x, (int)z);
+            return CellToWorld(WorldToCellClamped(worldPosition));
+        }
+
+        public bool TrySnapToFreeCell(Vector3 worldPosition, PrototypeTowerDraggable ignoredTower, out Vector3 snappedPosition)
+        {
+            var targetCell = WorldToCellClamped(worldPosition);
+            if (IsCellOccupied(targetCell, ignoredTower))
+            {
+                snappedPosition = default;
+                return false;
+            }
+
+            snappedPosition = CellToWorld(targetCell);
+            return true;
+        }
+
+        public bool HasFreeCell()
+        {
+            return TryGetRandomFreeCell(out _);
         }
 
         public bool TryGetRandomFreeCell(out Vector3 position)
         {
-            var occupiedCells = new HashSet<Vector2Int>();
-            var towers = UnityEngine.Object.FindObjectsByType<PrototypeTowerDraggable>(FindObjectsInactive.Exclude);
-            foreach (var tower in towers)
-            {
-                if (TryWorldToCell(tower.transform.position, out var cell))
-                {
-                    occupiedCells.Add(cell);
-                }
-            }
-
+            var occupiedCells = GetOccupiedCells(null);
             var freeCells = new List<Vector2Int>();
             for (var x = 0; x < size; x++)
             {
@@ -59,15 +63,49 @@ namespace MergeDefense.Prototype
                 return false;
             }
 
-            var selectedCell = freeCells[Random.Range(0, freeCells.Count)];
-            position = CellToWorld(selectedCell.x, selectedCell.y);
+            position = CellToWorld(freeCells[Random.Range(0, freeCells.Count)]);
             return true;
         }
 
-        private Vector3 CellToWorld(int x, int z)
+        private bool IsCellOccupied(Vector2Int cell, PrototypeTowerDraggable ignoredTower)
+        {
+            return GetOccupiedCells(ignoredTower).Contains(cell);
+        }
+
+        private HashSet<Vector2Int> GetOccupiedCells(PrototypeTowerDraggable ignoredTower)
+        {
+            var occupiedCells = new HashSet<Vector2Int>();
+            var towers = UnityEngine.Object.FindObjectsByType<PrototypeTowerDraggable>(FindObjectsInactive.Exclude);
+            foreach (var tower in towers)
+            {
+                if (tower == null || tower == ignoredTower)
+                {
+                    continue;
+                }
+
+                if (TryWorldToCell(tower.transform.position, out var cell))
+                {
+                    occupiedCells.Add(cell);
+                }
+            }
+
+            return occupiedCells;
+        }
+
+        private Vector2Int WorldToCellClamped(Vector3 worldPosition)
         {
             var half = (size - 1) * 0.5f;
-            return new Vector3((x - half) * cellSize, towerHeightOffset, (z - half) * cellSize);
+            var x = Mathf.RoundToInt(worldPosition.x / cellSize + half);
+            var z = Mathf.RoundToInt(worldPosition.z / cellSize + half);
+            x = Mathf.Clamp(x, 0, size - 1);
+            z = Mathf.Clamp(z, 0, size - 1);
+            return new Vector2Int(x, z);
+        }
+
+        private Vector3 CellToWorld(Vector2Int cell)
+        {
+            var half = (size - 1) * 0.5f;
+            return new Vector3((cell.x - half) * cellSize, towerHeightOffset, (cell.y - half) * cellSize);
         }
 
         private bool TryWorldToCell(Vector3 worldPosition, out Vector2Int cell)
@@ -86,4 +124,3 @@ namespace MergeDefense.Prototype
         }
     }
 }
-

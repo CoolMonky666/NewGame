@@ -7,6 +7,8 @@ namespace MergeDefense.Prototype
         [SerializeField] private PrototypeBattleBoard board;
         [SerializeField] private float dragPlaneHeight = 0.08f;
 
+        private Vector3 lastValidPosition;
+
         public float DragPlaneHeight => dragPlaneHeight;
 
         public void Configure(PrototypeBattleBoard battleBoard)
@@ -15,6 +17,12 @@ namespace MergeDefense.Prototype
             if (board != null)
             {
                 dragPlaneHeight = board.TowerHeightOffset;
+                lastValidPosition = board.SnapToCell(transform.position);
+                transform.position = lastValidPosition;
+            }
+            else
+            {
+                lastValidPosition = transform.position;
             }
         }
 
@@ -34,10 +42,20 @@ namespace MergeDefense.Prototype
 
         public void SnapToBoard()
         {
-            if (board != null)
+            if (board == null)
             {
-                transform.position = board.SnapToCell(transform.position);
+                lastValidPosition = transform.position;
+                return;
             }
+
+            if (board.TrySnapToFreeCell(transform.position, this, out var snappedPosition))
+            {
+                transform.position = snappedPosition;
+                lastValidPosition = snappedPosition;
+                return;
+            }
+
+            transform.position = lastValidPosition;
         }
     }
 }

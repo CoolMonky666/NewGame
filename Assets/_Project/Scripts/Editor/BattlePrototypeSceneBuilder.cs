@@ -83,18 +83,8 @@ namespace MergeDefense.EditorTools
             var towerRoot = new GameObject("Towers");
 
             var enemyRoot = new GameObject("Enemies");
-            for (var i = 0; i < 10; i++)
-            {
-                var enemy = (GameObject)PrefabUtility.InstantiatePrefab(enemyPrefab, scene);
-                enemy.name = $"base_enemy_1_{i + 1:00}";
-                enemy.transform.SetParent(enemyRoot.transform);
-
-                var health = enemy.AddComponent<PrototypeEnemyHealth>();
-                health.Configure(3, FindChild(enemy.transform, "HitPoint"));
-
-                var follower = enemy.AddComponent<PrototypePathFollower>();
-                follower.Configure(waypoints, 0.85f, i * 1.35f, true);
-            }
+            var enemySpawner = new GameObject("Enemy Spawner").AddComponent<PrototypeEnemySpawner>();
+            enemySpawner.Configure(enemyPrefab, enemyRoot.transform, waypoints, 10, 1.35f, 0.85f, 3, true);
 
             CreateLighting();
             CreateCamera();
@@ -309,4 +299,5 @@ namespace MergeDefense.EditorTools
         }
     }
 }
+
 

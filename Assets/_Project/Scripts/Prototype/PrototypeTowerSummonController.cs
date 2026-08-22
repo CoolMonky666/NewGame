@@ -52,19 +52,18 @@ namespace MergeDefense.Prototype
 
         private void Update()
         {
-            if (Time.time < nextCoinTime)
+            if (Time.time >= nextCoinTime)
             {
-                return;
+                coins += Mathf.Max(0, passiveCoinsPerTick);
+                nextCoinTime = Time.time + Mathf.Max(0.1f, passiveCoinInterval);
             }
 
-            coins += Mathf.Max(0, passiveCoinsPerTick);
-            nextCoinTime = Time.time + Mathf.Max(0.1f, passiveCoinInterval);
             RefreshUi();
         }
 
         private void TrySummonTower()
         {
-            if (coins < summonCost || board == null || towerRoot == null || towerPrefabs == null || towerPrefabs.Length == 0)
+            if (!CanSummon())
             {
                 RefreshUi();
                 return;
@@ -98,6 +97,11 @@ namespace MergeDefense.Prototype
             RefreshUi();
         }
 
+        private bool CanSummon()
+        {
+            return coins >= summonCost && board != null && board.HasFreeCell() && towerRoot != null && towerPrefabs != null && towerPrefabs.Length > 0;
+        }
+
         private void RefreshUi()
         {
             if (coinText != null)
@@ -107,7 +111,7 @@ namespace MergeDefense.Prototype
 
             if (summonButton != null)
             {
-                summonButton.interactable = coins >= summonCost && board != null && towerPrefabs != null && towerPrefabs.Length > 0;
+                summonButton.interactable = CanSummon();
             }
         }
 
