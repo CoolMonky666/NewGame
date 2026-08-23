@@ -16,6 +16,7 @@ namespace MergeDefense.EditorTools
         private const string Tower1PrefabPath = "Assets/_Project/Prefabs/Towers/base_tower_1.prefab";
         private const string Tower4PrefabPath = "Assets/_Project/Prefabs/Towers/base_tower_4.prefab";
         private const string EnemyPrefabPath = "Assets/_Project/Prefabs/Enemies/base_enemy_1.prefab";
+        private const string CastlePrefabPath = "Assets/_Project/Prefabs/Environment/base_castle_1.prefab";
         private const string MaterialFolder = "Assets/_Project/Art/Materials/Prototype";
 
         [MenuItem("Tools/Merge Defense/Create Battle Prototype Scene")]
@@ -24,7 +25,8 @@ namespace MergeDefense.EditorTools
             var tower1Prefab = LoadPrefab(Tower1PrefabPath);
             var tower4Prefab = LoadPrefab(Tower4PrefabPath);
             var enemyPrefab = LoadPrefab(EnemyPrefabPath);
-            if (tower1Prefab == null || tower4Prefab == null || enemyPrefab == null)
+            var castlePrefab = LoadPrefab(CastlePrefabPath);
+            if (tower1Prefab == null || tower4Prefab == null || enemyPrefab == null || castlePrefab == null)
             {
                 return;
             }
@@ -33,7 +35,6 @@ namespace MergeDefense.EditorTools
             var boardMaterial = GetOrCreateMaterial("prototype_board_tile", new Color(0.25f, 0.34f, 0.29f, 1f));
             var boardAltMaterial = GetOrCreateMaterial("prototype_board_tile_alt", new Color(0.31f, 0.41f, 0.35f, 1f));
             var pathMaterial = GetOrCreateMaterial("prototype_enemy_path", new Color(0.48f, 0.38f, 0.26f, 1f));
-            var castleMaterial = GetOrCreateMaterial("prototype_castle", new Color(0.55f, 0.58f, 0.62f, 1f));
             var markerMaterial = GetOrCreateMaterial("prototype_path_marker", new Color(0.70f, 0.24f, 0.20f, 1f));
             var projectileMaterial = GetOrCreateMaterial("prototype_projectile", new Color(0.95f, 0.84f, 0.28f, 1f));
 
@@ -78,7 +79,7 @@ namespace MergeDefense.EditorTools
 
             CreatePathTiles(pathRoot.transform, waypointPositions, pathMaterial);
             CreatePathMarker("Spawn Marker", waypointPositions[0], markerMaterial);
-            CreateCastle(waypointPositions[^1] + new Vector3(-0.45f, 0.55f, 0.85f), castleMaterial);
+            CreateCastle(castlePrefab, waypointPositions[^1] + new Vector3(-0.45f, 0f, 0.85f));
 
             var towerRoot = new GameObject("Towers");
 
@@ -169,13 +170,12 @@ namespace MergeDefense.EditorTools
             marker.GetComponent<Renderer>().sharedMaterial = material;
         }
 
-        private static void CreateCastle(Vector3 position, Material material)
+        private static void CreateCastle(GameObject castlePrefab, Vector3 position)
         {
-            var castle = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            castle.name = "Castle Placeholder";
+            var castle = (GameObject)PrefabUtility.InstantiatePrefab(castlePrefab);
+            castle.name = "Castle";
             castle.transform.position = position;
-            castle.transform.localScale = new Vector3(1.35f, 1.1f, 1.35f);
-            castle.GetComponent<Renderer>().sharedMaterial = material;
+            castle.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
         }
 
         private static void CreateLighting()
@@ -299,6 +299,10 @@ namespace MergeDefense.EditorTools
         }
     }
 }
+
+
+
+
 
 
 
