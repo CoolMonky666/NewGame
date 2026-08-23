@@ -79,7 +79,7 @@ namespace MergeDefense.EditorTools
 
             CreatePathTiles(pathRoot.transform, waypointPositions, pathMaterial);
             CreatePathMarker("Spawn Marker", waypointPositions[0], markerMaterial);
-            CreateCastle(castlePrefab, waypointPositions[^1] + new Vector3(-0.45f, 0f, 0.85f));
+            CreateCastle(castlePrefab, waypointPositions[^1] + new Vector3(0f, 0f, 0.85f));
 
             var towerRoot = new GameObject("Towers");
 
@@ -299,10 +299,4 @@ namespace MergeDefense.EditorTools
         }
     }
 }
-
-
-
-
-
-
 
