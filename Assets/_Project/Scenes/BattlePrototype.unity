@@ -2947,7 +2947,7 @@ MonoBehaviour:
   spawnInterval: 1.35
   enemySpeed: 0.85
   enemyHealth: 3
-  loopPath: 1
+  loopPath: 0
 --- !u!4 &863952901
 Transform:
   m_ObjectHideFlags: 0
@@ -5591,3 +5591,4 @@ SceneRoots:
   - {fileID: 703172232}
   - {fileID: 229309022}
   - {fileID: 1899113313}
+

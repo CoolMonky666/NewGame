@@ -4,6 +4,8 @@ namespace MergeDefense.Prototype
 {
     public sealed class PrototypePathFollower : MonoBehaviour
     {
+        private static readonly int IsAttackingHash = Animator.StringToHash("IsAttacking");
+
         [SerializeField] private Transform[] waypoints;
         [SerializeField] private float speed = 1f;
         [SerializeField] private float startDistance;
@@ -11,6 +13,7 @@ namespace MergeDefense.Prototype
         [SerializeField] private float waypointReachDistance = 0.02f;
 
         private int segmentIndex;
+        private Animator animator;
 
         public void Configure(Transform[] pathWaypoints, float movementSpeed, float startDistanceAlongPath, bool shouldLoop)
         {
@@ -18,11 +21,19 @@ namespace MergeDefense.Prototype
             speed = movementSpeed;
             startDistance = startDistanceAlongPath;
             loopPath = shouldLoop;
+            animator = GetComponentInChildren<Animator>(true);
+            SetAttacking(false);
             PlaceAtDistance(startDistance);
+        }
+
+        private void Awake()
+        {
+            animator = GetComponentInChildren<Animator>(true);
         }
 
         private void OnEnable()
         {
+            SetAttacking(false);
             PlaceAtDistance(startDistance);
         }
 
@@ -95,7 +106,7 @@ namespace MergeDefense.Prototype
                 {
                     if (!loopPath)
                     {
-                        enabled = false;
+                        ReachEndOfPath();
                         return;
                     }
 
@@ -123,6 +134,23 @@ namespace MergeDefense.Prototype
                     segmentIndex++;
                 }
             }
+        }
+
+        private void ReachEndOfPath()
+        {
+            transform.position = waypoints[^1].position;
+            SetAttacking(true);
+            enabled = false;
+        }
+
+        private void SetAttacking(bool isAttacking)
+        {
+            if (animator == null)
+            {
+                return;
+            }
+
+            animator.SetBool(IsAttackingHash, isAttacking);
         }
 
         private bool HasPath()

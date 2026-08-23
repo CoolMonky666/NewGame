@@ -84,7 +84,7 @@ namespace MergeDefense.EditorTools
 
             var enemyRoot = new GameObject("Enemies");
             var enemySpawner = new GameObject("Enemy Spawner").AddComponent<PrototypeEnemySpawner>();
-            enemySpawner.Configure(enemyPrefab, enemyRoot.transform, waypoints, 10, 1.35f, 0.85f, 3, true);
+            enemySpawner.Configure(enemyPrefab, enemyRoot.transform, waypoints, 10, 1.35f, 0.85f, 3, false);
 
             CreateLighting();
             CreateCamera();
@@ -299,5 +299,6 @@ namespace MergeDefense.EditorTools
         }
     }
 }
+
 
 
