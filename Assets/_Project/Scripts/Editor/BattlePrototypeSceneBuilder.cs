@@ -79,17 +79,17 @@ namespace MergeDefense.EditorTools
 
             CreatePathTiles(pathRoot.transform, waypointPositions, pathMaterial);
             CreatePathMarker("Spawn Marker", waypointPositions[0], markerMaterial);
-            CreateCastle(castlePrefab, waypointPositions[^1] + new Vector3(0f, 0f, 0.85f));
+            var castleHealth = CreateCastle(castlePrefab, waypointPositions[^1] + new Vector3(0f, 0f, 0.85f));
 
             var towerRoot = new GameObject("Towers");
 
             var enemyRoot = new GameObject("Enemies");
             var enemySpawner = new GameObject("Enemy Spawner").AddComponent<PrototypeEnemySpawner>();
-            enemySpawner.Configure(enemyPrefab, enemyRoot.transform, waypoints, 10, 1.35f, 0.85f, 3, false);
+            enemySpawner.Configure(enemyPrefab, enemyRoot.transform, waypoints, castleHealth, 10, 1.35f, 0.85f, 3, 1, 1f, false);
 
             CreateLighting();
             CreateCamera();
-            CreateBattleUi(board, towerRoot.transform, new[] { tower1Prefab, tower4Prefab }, projectileMaterial);
+            CreateBattleUi(board, towerRoot.transform, new[] { tower1Prefab, tower4Prefab }, projectileMaterial, castleHealth);
 
             Directory.CreateDirectory(Path.GetDirectoryName(ScenePath));
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -170,12 +170,16 @@ namespace MergeDefense.EditorTools
             marker.GetComponent<Renderer>().sharedMaterial = material;
         }
 
-        private static void CreateCastle(GameObject castlePrefab, Vector3 position)
+        private static PrototypeCastleHealth CreateCastle(GameObject castlePrefab, Vector3 position)
         {
             var castle = (GameObject)PrefabUtility.InstantiatePrefab(castlePrefab);
             castle.name = "Castle";
             castle.transform.position = position;
             castle.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+
+            var castleHealth = castle.GetComponent<PrototypeCastleHealth>() ?? castle.AddComponent<PrototypeCastleHealth>();
+            castleHealth.Configure(10, null);
+            return castleHealth;
         }
 
         private static void CreateLighting()
@@ -209,7 +213,7 @@ namespace MergeDefense.EditorTools
             return camera;
         }
 
-        private static void CreateBattleUi(PrototypeBattleBoard board, Transform towerRoot, GameObject[] towerPrefabs, Material projectileMaterial)
+        private static void CreateBattleUi(PrototypeBattleBoard board, Transform towerRoot, GameObject[] towerPrefabs, Material projectileMaterial, PrototypeCastleHealth castleHealth)
         {
             var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
 
@@ -234,13 +238,25 @@ namespace MergeDefense.EditorTools
             var panelImage = panel.AddComponent<Image>();
             panelImage.color = new Color(0.08f, 0.10f, 0.12f, 0.82f);
 
-            var coinText = CreateText("Coin Counter", panel.transform, font, "Coins: 0", 44, TextAnchor.MiddleLeft, new Color(1f, 0.86f, 0.32f, 1f));
+            var coinText = CreateText("Coin Counter", panel.transform, font, "Coins: 0", 40, TextAnchor.MiddleLeft, new Color(1f, 0.86f, 0.32f, 1f));
             var coinRect = coinText.GetComponent<RectTransform>();
             coinRect.anchorMin = new Vector2(0f, 0.5f);
             coinRect.anchorMax = new Vector2(0f, 0.5f);
             coinRect.pivot = new Vector2(0f, 0.5f);
-            coinRect.anchoredPosition = new Vector2(38f, 0f);
-            coinRect.sizeDelta = new Vector2(330f, 92f);
+            coinRect.anchoredPosition = new Vector2(38f, 28f);
+            coinRect.sizeDelta = new Vector2(340f, 72f);
+
+            var castleHpText = CreateText("Castle HP Counter", panel.transform, font, "Castle HP: 10/10", 32, TextAnchor.MiddleLeft, new Color(0.80f, 0.93f, 1f, 1f));
+            var castleHpRect = castleHpText.GetComponent<RectTransform>();
+            castleHpRect.anchorMin = new Vector2(0f, 0.5f);
+            castleHpRect.anchorMax = new Vector2(0f, 0.5f);
+            castleHpRect.pivot = new Vector2(0f, 0.5f);
+            castleHpRect.anchoredPosition = new Vector2(38f, -38f);
+            castleHpRect.sizeDelta = new Vector2(360f, 58f);
+            if (castleHealth != null)
+            {
+                castleHealth.Configure(10, castleHpText);
+            }
 
             var buttonObject = new GameObject("Summon Tower Button");
             buttonObject.transform.SetParent(panel.transform, false);

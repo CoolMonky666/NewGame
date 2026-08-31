@@ -14,6 +14,7 @@ namespace MergeDefense.Prototype
 
         private int segmentIndex;
         private Animator animator;
+        private PrototypeEnemyCastleAttacker castleAttacker;
 
         public void Configure(Transform[] pathWaypoints, float movementSpeed, float startDistanceAlongPath, bool shouldLoop)
         {
@@ -21,18 +22,19 @@ namespace MergeDefense.Prototype
             speed = movementSpeed;
             startDistance = startDistanceAlongPath;
             loopPath = shouldLoop;
-            animator = GetComponentInChildren<Animator>(true);
+            CacheComponents();
             SetAttacking(false);
             PlaceAtDistance(startDistance);
         }
 
         private void Awake()
         {
-            animator = GetComponentInChildren<Animator>(true);
+            CacheComponents();
         }
 
         private void OnEnable()
         {
+            CacheComponents();
             SetAttacking(false);
             PlaceAtDistance(startDistance);
         }
@@ -40,6 +42,12 @@ namespace MergeDefense.Prototype
         private void Update()
         {
             MoveAlongPath(speed * Time.deltaTime);
+        }
+
+        private void CacheComponents()
+        {
+            animator = GetComponentInChildren<Animator>(true);
+            castleAttacker = GetComponent<PrototypeEnemyCastleAttacker>();
         }
 
         private void PlaceAtDistance(float distance)
@@ -140,6 +148,11 @@ namespace MergeDefense.Prototype
         {
             transform.position = waypoints[^1].position;
             SetAttacking(true);
+            if (castleAttacker != null)
+            {
+                castleAttacker.BeginAttacking();
+            }
+
             enabled = false;
         }
 
