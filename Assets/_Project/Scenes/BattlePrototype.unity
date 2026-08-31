@@ -3909,7 +3909,7 @@ MonoBehaviour:
   - {fileID: 666906737}
   - {fileID: 1186416109}
   targetCastle: {fileID: 1197347558}
-  enemyCount: 10
+  enemyCount: 1
   spawnInterval: 1.35
   enemySpeed: 0.85
   enemyHealth: 3
@@ -5641,3 +5641,4 @@ SceneRoots:
   - {fileID: 1356982574}
   - {fileID: 1696791790}
   - {fileID: 1095068924}
+
